@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IT PMO — Project Board (Demo)</title>
+<!-- Defense in depth: only inline code runs, and the only allowed network destination is FormSubmit. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>IT PMO ‚Äî Project Board (Demo)</title>
 <style>
 /* =========================================================
-   1. Design tokens — palette, spacing, type
+   1. Design tokens ‚Äî palette, spacing, type
    ========================================================= */
 :root {
   --blue-900: #0b2e59;
@@ -26,7 +29,7 @@
   --prio-critical: #c62828;
   --prio-high:     #d98200;
   --prio-medium:   #2f6fd1;
-  --prio-low:      #7a8594;
+  --prio-low:      #5f6b7a; /* darkened from #7a8594: white pill text now passes 4.5:1 */
 
   --ok:      #1e7d4f;
   --ok-bg:   #e5f4ec;
@@ -34,8 +37,10 @@
   --warn-bg: #fff4dc;
   --danger:    #b3261e;
   --danger-bg: #fdeceb;
+  --danger-line: #f3b9b5;
+  --overdue-surface: #fff7f6;
 
-  --status-backlog:  #7a8594;
+  --status-backlog:  #5f6b7a;
   --status-progress: #2f6fd1;
   --status-blocked:  #c62828;
   --status-done:     #1e7d4f;
@@ -55,6 +60,7 @@
   --shadow-sm: 0 1px 2px rgba(11, 46, 89, 0.08);
   --shadow:    0 4px 14px rgba(11, 46, 89, 0.12);
   --shadow-lg: 0 18px 48px rgba(11, 46, 89, 0.28);
+  --tap: 44px; /* minimum touch target when stacked on mobile */
 
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -84,10 +90,10 @@ button { cursor: pointer; }
 }
 
 /* =========================================================
-   3. Header — wordmark, summary strip, add button
+   3. Header ‚Äî wordmark, summary strip, add button
    ========================================================= */
 .app-header {
-  background: linear-gradient(135deg, var(--blue-900), var(--blue-700));
+  background: var(--blue-900);
   color: #fff;
   padding: var(--sp-4) var(--sp-5);
 }
@@ -149,7 +155,8 @@ button { cursor: pointer; }
   gap: var(--sp-2);
 }
 .summary strong { font-size: 1.1rem; }
-.summary .is-overdue { background: rgba(198, 40, 40, 0.35); border-color: rgba(255, 180, 180, 0.5); }
+.summary .is-alert { background: rgba(198, 40, 40, 0.35); border-color: rgba(255, 180, 180, 0.5); }
+.summary .is-alert.is-zero { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.18); }
 .demo-note {
   margin: var(--sp-3) 0 0;
   font-size: 0.8rem;
@@ -335,9 +342,17 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 .badge-overdue {
   background: var(--danger-bg);
   color: var(--danger);
-  border: 1px solid #f3b9b5;
+  border: 1px solid var(--danger-line);
 }
 .due.is-overdue { color: var(--danger); font-weight: 600; }
+.due.is-soon    { color: var(--warn); font-weight: 600; }
+.due-note { font-weight: 400; }
+/* Urgency: overdue cards get a tinted surface and a red outline, on top of the text badge */
+.card.is-overdue {
+  background: var(--overdue-surface);
+  border-color: var(--danger-line);
+  border-left-color: var(--prio);
+}
 
 .icon-btn {
   position: absolute;
@@ -527,7 +542,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 }
 
 /* =========================================================
-   9. Responsive — stack columns below 768px
+   9. Responsive ‚Äî stack columns below 768px
    ========================================================= */
 @media (max-width: 1100px) {
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -539,6 +554,13 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   .form-grid { grid-template-columns: 1fr; }
   .filter-field, .filter-field input, .filter-field select { width: 100%; min-width: 0; }
   .filters h2 { width: 100%; }
+  /* 44px touch targets once stacked */
+  .card-top { padding-right: calc(var(--tap) + var(--sp-1)); }
+  .icon-btn { width: var(--tap); height: var(--tap); top: var(--sp-1); right: var(--sp-1); }
+  .move-btn, .move-menu button, .confirm-delete button, .btn, .modal-close {
+    min-height: var(--tap);
+    min-width: var(--tap);
+  }
 }
 </style>
 </head>
@@ -549,22 +571,22 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
      ========================================================= -->
 <header class="app-header">
   <div class="header-top">
-    <h1 class="wordmark">IT PMO <span>Project Board · Demo</span></h1>
+    <h1 class="wordmark">IT PMO <span>Project Board ¬∑ Demo</span></h1>
     <button type="button" class="btn btn-add" id="open-add">
-      <span aria-hidden="true">+</span> Add Task
+      <span aria-hidden="true">+</span> Add task
     </button>
   </div>
   <ul class="summary" id="summary" aria-label="Board summary">
     <li><span>Total</span> <strong data-sum="total">0</strong></li>
     <li><span>Backlog</span> <strong data-sum="Backlog">0</strong></li>
     <li><span>In Progress</span> <strong data-sum="In Progress">0</strong></li>
-    <li><span>Blocked</span> <strong data-sum="Blocked">0</strong></li>
+    <li class="is-alert"><span>Blocked</span> <strong data-sum="Blocked">0</strong></li>
     <li><span>Done</span> <strong data-sum="Done">0</strong></li>
-    <li class="is-overdue"><span>Overdue</span> <strong data-sum="overdue">0</strong></li>
+    <li class="is-alert"><span>Overdue</span> <strong data-sum="overdue">0</strong></li>
   </ul>
   <p class="demo-note">
-    <span aria-hidden="true">ⓘ</span>
-    Demo tool for training only. The board lives in memory — refreshing the page resets it to the sample data.
+    <span aria-hidden="true">‚ìò</span>
+    Demo tool for training only. The board lives in memory ‚Äî refreshing the page resets it to the sample data.
   </p>
 </header>
 
@@ -595,7 +617,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   </section>
 
   <!-- =========================================================
-       Kanban board — columns are generated from STATUSES
+       Kanban board ‚Äî columns are generated from STATUSES
        ========================================================= -->
   <section class="board" id="board" aria-label="Kanban board"></section>
 </main>
@@ -606,8 +628,8 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 <div class="modal-backdrop" id="modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-header">
-      <h2 id="modal-title">Add Task</h2>
-      <button type="button" class="modal-close" id="close-modal" aria-label="Close add task form">×</button>
+      <h2 id="modal-title">Add task</h2>
+      <button type="button" class="modal-close" id="close-modal" aria-label="Close add task form">√ó</button>
     </div>
     <form class="task-form" id="task-form" novalidate>
       <div class="form-grid">
@@ -632,7 +654,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
         <div class="field">
           <label for="f-project">Project / Workstream <span class="req" aria-hidden="true">*</span></label>
           <select id="f-project" name="project" required aria-describedby="e-project">
-            <option value="">Select a project…</option>
+            <option value="">Select a project‚Ä¶</option>
           </select>
           <div class="field-hint"><p class="error" id="e-project"></p></div>
         </div>
@@ -640,7 +662,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
         <div class="field">
           <label for="f-category">Category <span class="req" aria-hidden="true">*</span></label>
           <select id="f-category" name="category" required aria-describedby="e-category">
-            <option value="">Select a category…</option>
+            <option value="">Select a category‚Ä¶</option>
           </select>
           <div class="field-hint"><p class="error" id="e-category"></p></div>
         </div>
@@ -672,7 +694,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 
       <div class="form-actions">
         <button type="button" class="btn btn-ghost" id="cancel-modal">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="submit-task">Add Task</button>
+        <button type="submit" class="btn btn-primary" id="submit-task">Add task</button>
       </div>
     </form>
   </div>
@@ -697,7 +719,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 "use strict";
 
 /* =========================================================
-   CONFIG — change the email address here (one place only)
+   CONFIG ‚Äî change the email address here (one place only)
    ========================================================= */
 const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/YOUR_EMAIL@example.com";
 const FORMSUBMIT_TIMEOUT_MS = 15000;
@@ -732,14 +754,14 @@ const PRIORITIES = ["Critical", "High", "Medium", "Low"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /* =========================================================
-   State — the single source of truth (in memory only)
+   State ‚Äî the single source of truth (in memory only)
    ========================================================= */
 const state = {
   tasks: [],
   filters: { project: "", assignee: "", priority: "" },
   nextId: 1,
   pendingDeleteId: null, // card showing the inline "Delete? Yes / No" toggle
-  openMoveId: null,      // card whose "Move ▸" menu is open
+  openMoveId: null,      // card whose "Move ‚ñ∏" menu is open
   focusAfterRender: null, // { id, action } to restore keyboard focus after re-render
   isSending: false,
 };
@@ -779,6 +801,20 @@ function formatDate(iso) {
 function isOverdue(task) {
   return task.status !== "Done" && task.dueDate < todayISO();
 }
+// Whole days from today to a YYYY-MM-DD date (negative = past). UTC math avoids DST drift.
+function daysUntil(iso) {
+  const toUTC = (s) => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+  return Math.round((toUTC(iso) - toUTC(todayISO())) / 86400000);
+}
+const DUE_SOON_DAYS = 3;
+function dueNote(task) {
+  if (task.status === "Done") return "";
+  const days = daysUntil(task.dueDate);
+  if (days < 0) return `${-days} day${days === -1 ? "" : "s"} late`;
+  if (days === 0) return "due today";
+  if (days <= DUE_SOON_DAYS) return `in ${days} day${days === 1 ? "" : "s"}`;
+  return "";
+}
 function formatId(n) {
   return `UOB-ITPM-${String(n).padStart(4, "0")}`;
 }
@@ -795,7 +831,7 @@ function fillSelect(select, values) {
 }
 
 /* =========================================================
-   Seed data — 8 demo tasks, dates relative to today
+   Seed data ‚Äî 8 demo tasks, dates relative to today
    ========================================================= */
 function seedTasks() {
   const seed = [
@@ -869,10 +905,12 @@ function filtersActive() {
 }
 
 /* =========================================================
-   Rendering — the board is always re-rendered from state
+   Rendering ‚Äî the board is always re-rendered from state
    ========================================================= */
 function renderCard(task) {
   const overdue = isOverdue(task);
+  const note = dueNote(task);
+  const dueClass = overdue ? " is-overdue" : note ? " is-soon" : "";
   const id = escapeHtml(task.id);
   const title = escapeHtml(task.title);
   const moveOpen = state.openMoveId === task.id;
@@ -896,8 +934,8 @@ function renderCard(task) {
     </div>` : "";
 
   return `
-    <article class="card ${prioClass(task.priority)}" draggable="true" data-id="${id}" aria-label="${id}: ${title}">
-      <button type="button" class="icon-btn" data-action="delete" data-id="${id}" aria-label="Delete ${id}">×</button>
+    <article class="card ${prioClass(task.priority)}${overdue ? " is-overdue" : ""}" draggable="true" data-id="${id}" aria-label="${id}: ${title}">
+      <button type="button" class="icon-btn" data-action="delete" data-id="${id}" aria-label="Delete ${id}">√ó</button>
       <div class="card-top">
         <span class="task-id">${id}</span>
         ${overdue ? `<span class="badge-overdue">Overdue</span>` : ""}
@@ -907,7 +945,7 @@ function renderCard(task) {
       <dl class="card-meta">
         <dt>Project</dt><dd>${escapeHtml(task.project)}</dd>
         <dt>Assignee</dt><dd>${escapeHtml(task.assignee)}</dd>
-        <dt>Due</dt><dd class="due${overdue ? " is-overdue" : ""}"><time datetime="${escapeHtml(task.dueDate)}">${escapeHtml(formatDate(task.dueDate))}</time></dd>
+        <dt>Due</dt><dd class="due${dueClass}"><time datetime="${escapeHtml(task.dueDate)}">${escapeHtml(formatDate(task.dueDate))}</time>${note ? ` <span class="due-note">(${escapeHtml(note)})</span>` : ""}</dd>
       </dl>
       <div class="card-tags">
         <span class="pill${task.priority === "High" ? " prio-high-text" : ""}">${escapeHtml(task.priority)}</span>
@@ -915,7 +953,7 @@ function renderCard(task) {
       </div>
       <div class="card-actions">
         <button type="button" class="move-btn" data-action="move" data-id="${id}"
-          aria-expanded="${moveOpen}" aria-controls="move-${id}" aria-label="Move ${id} to another column">Move ▸</button>
+          aria-expanded="${moveOpen}" aria-controls="move-${id}" aria-label="Move ${id} to another column">Move ‚ñ∏</button>
       </div>
       ${moveMenu}
       ${confirm}
@@ -931,6 +969,8 @@ function renderSummary() {
   });
   document.querySelectorAll("[data-sum]").forEach((el) => {
     el.textContent = String(counts[el.dataset.sum]);
+    // Alert chips (Blocked, Overdue) only turn red when there is something to act on.
+    el.parentElement.classList.toggle("is-zero", counts[el.dataset.sum] === 0);
   });
 }
 
@@ -954,7 +994,7 @@ function renderBoard() {
           <span class="count-badge" aria-label="${colTasks.length} tasks${active ? ` shown of ${total}` : ""}">${badge}</span>
         </div>
         <div class="card-list">
-          ${colTasks.length ? colTasks.map(renderCard).join("") : `<p class="empty">${active ? "No matching tasks" : "Drop tasks here"}</p>`}
+          ${colTasks.length ? colTasks.map(renderCard).join("") : `<p class="empty">${active ? "No tasks match these filters." : "No tasks here yet. Drag a card in or add one."}</p>`}
         </div>
       </section>`;
   }).join("");
@@ -972,14 +1012,14 @@ function restoreFocus() {
   state.focusAfterRender = null;
   if (!target) return;
   const selector = target.action
-    ? `[data-action="${target.action}"][data-id="${target.id}"]`
+    ? `[data-action="${CSS.escape(target.action)}"][data-id="${CSS.escape(target.id)}"]`
     : target.selector;
   const el = document.querySelector(selector);
   if (el) el.focus();
 }
 
 /* =========================================================
-   Actions — mutate state, then re-render
+   Actions ‚Äî mutate state, then re-render
    ========================================================= */
 function addTask(data) {
   const task = {
@@ -1071,7 +1111,7 @@ async function notifyNewTask(task) {
 }
 
 /* =========================================================
-   Add Task form — validation & submission
+   Add Task form ‚Äî validation & submission
    ========================================================= */
 const FORM_FIELDS = ["title", "description", "project", "category", "assignee", "priority", "dueDate", "status"];
 
@@ -1093,6 +1133,7 @@ function validateForm(values) {
   if (!PROJECTS.includes(values.project)) errors.project = "Choose a project / workstream.";
   if (!CATEGORIES.includes(values.category)) errors.category = "Choose a category.";
   if (!values.assignee.trim()) errors.assignee = "Assignee is required.";
+  else if (values.assignee.trim().length > 60) errors.assignee = "Assignee must be 60 characters or fewer.";
   if (!PRIORITIES.includes(values.priority)) errors.priority = "Choose a priority.";
 
   if (!values.dueDate) errors.dueDate = "Due date is required.";
@@ -1135,7 +1176,7 @@ function setSending(sending) {
   state.isSending = sending;
   const btn = document.getElementById("submit-task");
   btn.disabled = sending;
-  btn.textContent = sending ? "Sending…" : "Add Task";
+  btn.textContent = sending ? "Sending‚Ä¶" : "Add task";
   btn.setAttribute("aria-busy", String(sending));
 }
 
@@ -1164,7 +1205,7 @@ async function handleSubmit(event) {
     showToast(`Email notification sent for ${task.id}.`, "info");
   } catch (err) {
     console.warn("[IT PMO] Notification failed:", err);
-    showToast("Card added locally — email notification failed", "warning", 6000);
+    showToast("Card added locally ‚Äî email notification failed", "warning", 6000);
   } finally {
     setSending(false);
     closeModal();
@@ -1209,7 +1250,7 @@ function trapFocus(event) {
 }
 
 /* =========================================================
-   Board interactions — click delegation (move / delete)
+   Board interactions ‚Äî click delegation (move / delete)
    ========================================================= */
 function handleBoardClick(event) {
   const btn = event.target.closest("button[data-action]");
@@ -1250,7 +1291,7 @@ function handleBoardClick(event) {
 }
 
 /* =========================================================
-   Drag & drop — native HTML5 API, delegated on the board
+   Drag & drop ‚Äî native HTML5 API, delegated on the board
    ========================================================= */
 function bindDragAndDrop(board) {
   board.addEventListener("dragstart", (event) => {
