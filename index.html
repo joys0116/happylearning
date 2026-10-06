@@ -537,9 +537,43 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   to   { transform: none; opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .toast { animation: none; }
+  .toast, .announce { animation: none; }
   .column { transition: none; }
 }
+
+/* Announcement popup (shown after a short stay on the page) */
+.announce {
+  position: fixed;
+  left: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: 90;
+  width: min(360px, calc(100vw - 2 * var(--sp-4)));
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--surface);
+  border-top: 5px solid var(--blue-700);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  animation: toast-in 0.2s ease-out;
+}
+.announce[hidden] { display: none; }
+.announce-eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue-700);
+}
+.announce h2 { margin: var(--sp-1) 0 var(--sp-3); font-size: 1.1rem; color: var(--blue-900); }
+.announce dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  font-size: 0.9rem;
+}
+.announce dt { color: var(--ink-muted); }
+.announce dd { margin: 0; font-weight: 600; }
 
 /* =========================================================
    9. Footer — Claude Code skills used to review the board
@@ -757,6 +791,17 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 <!-- Toast region: announced politely to screen readers -->
 <div class="toast-region" id="toasts" aria-live="polite" aria-atomic="false"></div>
 
+<!-- Meeting announcement: revealed after ANNOUNCE_DELAY_MS on the page -->
+<aside class="announce" id="announce" aria-labelledby="announce-title" aria-live="polite" hidden>
+  <p class="announce-eyebrow">Reminder</p>
+  <h2 id="announce-title">IT Project Briefing</h2>
+  <dl>
+    <dt>When</dt>  <dd>Saturday, 19 June 2027, 2:00 PM</dd>
+    <dt>Where</dt> <dd>Town Hall Meeting Room</dd>
+  </dl>
+  <button type="button" class="btn btn-primary" id="announce-close">Got it</button>
+</aside>
+
 <!--
   =========================================================
   FormSubmit configuration
@@ -777,6 +822,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
    ========================================================= */
 const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/YOUR_EMAIL@example.com";
 const FORMSUBMIT_TIMEOUT_MS = 15000;
+const ANNOUNCE_DELAY_MS = 10000; // time on the page before the briefing reminder appears
 
 /* =========================================================
    Constants
@@ -1399,6 +1445,10 @@ function handleKeydown(event) {
     else trapFocus(event);
     return;
   }
+  if (event.key === "Escape" && !document.getElementById("announce").hidden) {
+    closeAnnouncement();
+    return;
+  }
   if (event.key === "Escape" && (state.openMoveId || state.pendingDeleteId)) {
     const id = state.openMoveId || state.pendingDeleteId;
     const action = state.openMoveId ? "move" : "delete";
@@ -1464,6 +1514,20 @@ function initFilters() {
   });
 }
 
+/* =========================================================
+   Briefing reminder (non-blocking, shown once per page load)
+   ========================================================= */
+function closeAnnouncement() {
+  document.getElementById("announce").hidden = true;
+}
+
+function initAnnouncement() {
+  document.getElementById("announce-close").addEventListener("click", closeAnnouncement);
+  setTimeout(() => {
+    document.getElementById("announce").hidden = false;
+  }, ANNOUNCE_DELAY_MS);
+}
+
 function init() {
   seedTasks();
   initForm();
@@ -1472,6 +1536,7 @@ function init() {
   board.addEventListener("click", handleBoardClick);
   bindDragAndDrop(board);
   document.addEventListener("keydown", handleKeydown);
+  initAnnouncement();
   renderBoard();
 }
 
