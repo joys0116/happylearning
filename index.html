@@ -542,7 +542,34 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 }
 
 /* =========================================================
-   9. Responsive — stack columns below 768px
+   9. Footer — Claude Code skills used to review the board
+   ========================================================= */
+.app-footer {
+  border-top: 1px solid var(--line);
+  padding: var(--sp-5) var(--sp-5) var(--sp-6);
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+.app-footer h2 { margin: 0 0 var(--sp-1); font-size: 0.95rem; color: var(--ink); }
+.app-footer > p { margin: 0 0 var(--sp-3); max-width: 70ch; }
+.skill-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-3) var(--sp-5);
+}
+.skill-list li { min-width: 0; }
+.skill-list code, .app-footer code {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--blue-800);
+}
+.skill-list strong { display: block; color: var(--ink); }
+
+/* =========================================================
+   10. Responsive — stack columns below 768px
    ========================================================= */
 @media (max-width: 1100px) {
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -550,6 +577,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 @media (max-width: 767px) {
   .app-header { padding: var(--sp-4); }
   main { padding: var(--sp-3) var(--sp-4) var(--sp-5); }
+  .app-footer { padding: var(--sp-4) var(--sp-4) var(--sp-5); }
   .board { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   .filter-field, .filter-field input, .filter-field select { width: 100%; min-width: 0; }
@@ -621,6 +649,32 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
        ========================================================= -->
   <section class="board" id="board" aria-label="Kanban board"></section>
 </main>
+
+<!-- =========================================================
+     Footer — skills used to review this page (files live in .claude/skills)
+     ========================================================= -->
+<footer class="app-footer" aria-labelledby="skills-heading">
+  <h2 id="skills-heading">Reviewed with Claude Code skills</h2>
+  <p>This board was checked and improved using project skills stored in the repository under <code>.claude/skills</code>.</p>
+  <ul class="skill-list">
+    <li>
+      <strong><code>cybersecurity-analyst</code></strong>
+      Threat model and XSS test. Added a content security policy that limits network calls to the email service.
+    </li>
+    <li>
+      <strong><code>ui-ux-pro-max</code></strong>
+      Accessibility audit. Fixed text contrast and made buttons at least 44 px on phones.
+    </li>
+    <li>
+      <strong><code>frontend-design</code></strong>
+      Urgency cues. Added "days late" and "due soon" labels, and alert colours on the Blocked and Overdue counts.
+    </li>
+    <li>
+      <strong><code>publish-github</code></strong>
+      Publishing. Sets up GitHub Pages with automated checks before each deploy.
+    </li>
+  </ul>
+</footer>
 
 <!-- =========================================================
      Add Task modal
