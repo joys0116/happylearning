@@ -31,20 +31,26 @@ jobs:
         run: |
           set -e
           test -f index.html || { echo "index.html missing"; exit 1; }
+          files="index.html"
+          [ -f v2/index.html ] && files="$files v2/index.html"
           fail=0
-          check() { if grep -nE "$1" index.html; then echo "::error::$2"; fail=1; fi; }
-          check 'localStorage|sessionStorage|indexedDB|document\.cookie' 'Persistence APIs are not allowed'
-          check '(^|[^.a-zA-Z_])(alert|confirm)\(' 'Native alert()/confirm() are not allowed'
-          check '<script[^>]+src=' 'External scripts are not allowed'
-          check '<link[^>]+href="?https?:' 'External stylesheets/fonts are not allowed'
-          check '!important' '!important is not allowed'
-          hosts=$(grep -oE 'https?://[A-Za-z0-9.-]+' index.html | sed -E 's#https?://##' | sort -u | grep -vE '^(formsubmit\.co|www\.w3\.org)$' || true)
-          if [ -n "$hosts" ]; then echo "::error::Unexpected external hosts: $hosts"; fail=1; fi
+          for f in $files; do
+            echo "Checking $f"
+            check() { if grep -nE "$1" "$f"; then echo "::error file=$f::$2"; fail=1; fi; }
+            check 'localStorage|sessionStorage|indexedDB|document\.cookie' 'Persistence APIs are not allowed'
+            check '(^|[^.a-zA-Z_])(alert|confirm)\(' 'Native alert()/confirm() are not allowed'
+            check '<script[^>]+src=' 'External scripts are not allowed'
+            check '<link[^>]+href="?https?:' 'External stylesheets/fonts are not allowed'
+            check '!important' '!important is not allowed'
+            hosts=$(grep -oE 'https?://[A-Za-z0-9.-]+' "$f" | sed -E 's#https?://##' | sort -u | grep -vE '^(formsubmit\.co|www\.w3\.org)$' || true)
+            if [ -n "$hosts" ]; then echo "::error file=$f::Unexpected external hosts: $hosts"; fail=1; fi
+          done
           exit $fail
 
       - name: HTML well-formedness
         run: |
           python3 - <<'PY'
+          import os
           from html.parser import HTMLParser
           VOID = {"area","base","br","col","embed","hr","img","input","link","meta","source","track","wbr"}
           class P(HTMLParser):
@@ -58,10 +64,13 @@ jobs:
                       self.errors.append(f"Unexpected </{tag}> at line {self.getpos()[0]}")
                       while self.stack and self.stack[-1][0] != tag: self.stack.pop()
                   if self.stack: self.stack.pop()
-          p = P(); p.feed(open("index.html", encoding="utf-8").read())
-          unclosed = [f"<{t}> line {l}" for t, (l, _) in p.stack if t not in ("html","head","body","p","li")]
-          for e in p.errors + [f"Unclosed {u}" for u in unclosed]: print(f"::error::{e}")
-          raise SystemExit(1 if p.errors or unclosed else 0)
+          failed = False
+          for path in [p for p in ("index.html", "v2/index.html") if os.path.exists(p)]:
+              p = P(); p.feed(open(path, encoding="utf-8").read())
+              unclosed = [f"<{t}> line {l}" for t, (l, _) in p.stack if t not in ("html","head","body","p","li")]
+              for e in p.errors + [f"Unclosed {u}" for u in unclosed]: print(f"::error file={path}::{e}")
+              failed = failed or bool(p.errors or unclosed)
+          raise SystemExit(1 if failed else 0)
           PY
 
   deploy:
@@ -80,6 +89,10 @@ jobs:
         run: |
           mkdir _site
           cp index.html _site/
+          if [ -f v2/index.html ]; then
+            mkdir _site/v2
+            cp v2/index.html _site/v2/
+          fi
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
