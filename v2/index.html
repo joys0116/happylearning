@@ -6,10 +6,10 @@
 <!-- Defense in depth: everything is inline, and the only allowed network destination is FormSubmit. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<title>IT PMO ‚Äî Project Board v2 (Demo)</title>
+<title>IT PMO — Project Board v2 (Demo)</title>
 <style>
 /* =========================================================
-   1. Design tokens ‚Äî palette, spacing, type
+   1. Design tokens — palette, spacing, type
    ========================================================= */
 :root {
   /* Dark blue + gray theme. Native controls (date picker, selects, scrollbars) follow it. */
@@ -139,7 +139,7 @@ kbd {
 }
 
 /* =========================================================
-   3. Header ‚Äî wordmark, board pulse, add button
+   3. Header — wordmark, board pulse, add button
    ========================================================= */
 .app-header {
   background: var(--header-bg);
@@ -409,7 +409,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 }
 
 /* =========================================================
-   6. Cards ‚Äî urgency is the one loud thing on the page
+   6. Cards — urgency is the one loud thing on the page
    ========================================================= */
 .card {
   --prio: var(--prio-medium);
@@ -749,7 +749,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 }
 
 /* =========================================================
-   9. Footer ‚Äî Claude Code skills used to build v2
+   9. Footer — Claude Code skills used to build v2
    ========================================================= */
 .app-footer {
   border-top: 1px solid var(--line);
@@ -778,7 +778,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 .footer-link { color: var(--accent-ink); }
 
 /* =========================================================
-   10. Responsive ‚Äî stack columns below 768px
+   10. Responsive — stack columns below 768px
    ========================================================= */
 @media (max-width: 1100px) {
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -797,7 +797,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   .header-actions, .header-actions .btn { width: 100%; }
   .header-actions .btn { flex: 1 1 0; }
 
-  /* Touch targets ‚â• 44px when stacked */
+  /* Touch targets ≥ 44px when stacked */
   .btn, .filter-field input, .filter-field select,
   .field input, .field select, .move-btn, .move-menu button,
   .confirm-delete button, .col-add { min-height: var(--tap); }
@@ -834,14 +834,14 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
       <li>
         <button type="button" class="kpi kpi-alert" data-flag="overdue" aria-pressed="false">
           <span class="kpi-num" data-sum="overdue">0</span>
-          <span class="kpi-label"><span aria-hidden="true">‚ö†</span> Overdue</span>
+          <span class="kpi-label"><span aria-hidden="true">⚠</span> Overdue</span>
           <span class="kpi-hint" data-flag-hint>Show only these</span>
         </button>
       </li>
       <li>
         <button type="button" class="kpi kpi-soon" data-flag="soon" aria-pressed="false">
           <span class="kpi-num" data-sum="soon">0</span>
-          <span class="kpi-label"><span aria-hidden="true">‚ó∑</span> Due in 7 days</span>
+          <span class="kpi-label"><span aria-hidden="true">◷</span> Due in 7 days</span>
           <span class="kpi-hint" data-flag-hint>Show only these</span>
         </button>
       </li>
@@ -856,8 +856,8 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   </section>
 
   <p class="demo-note">
-    <span aria-hidden="true">‚ìò</span>
-    Demo tool for training only. The board lives in memory ‚Äî refreshing the page resets it to the sample data.
+    <span aria-hidden="true">ⓘ</span>
+    Demo tool for training only. The board lives in memory — refreshing the page resets it to the sample data.
   </p>
 </header>
 
@@ -894,13 +894,13 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   </section>
 
   <!-- =========================================================
-       Kanban board ‚Äî columns are generated from STATUSES
+       Kanban board — columns are generated from STATUSES
        ========================================================= -->
   <section class="board" id="board" aria-label="Kanban board"></section>
 </main>
 
 <!-- =========================================================
-     Footer ‚Äî skills used to build this page (files live in .claude/skills)
+     Footer — skills used to build this page (files live in .claude/skills)
      ========================================================= -->
 <footer class="app-footer" aria-labelledby="skills-heading">
   <h2 id="skills-heading">Built with Claude Code skills</h2>
@@ -933,7 +933,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-header">
       <h2 id="modal-title">Add task</h2>
-      <button type="button" class="modal-close" id="close-modal" aria-label="Close add task form">√ó</button>
+      <button type="button" class="modal-close" id="close-modal" aria-label="Close add task form">×</button>
     </div>
     <form class="task-form" id="task-form" novalidate>
       <p class="form-note">Fields marked <span class="req" aria-hidden="true">*</span><span class="visually-hidden">with an asterisk</span> are required.</p>
@@ -959,7 +959,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
         <div class="field">
           <label for="f-project">Project / Workstream <span class="req" aria-hidden="true">*</span></label>
           <select id="f-project" name="project" required aria-describedby="e-project">
-            <option value="">Select a project‚Ä¶</option>
+            <option value="">Select a project…</option>
           </select>
           <div class="field-hint"><p class="error" id="e-project"></p></div>
         </div>
@@ -967,7 +967,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
         <div class="field">
           <label for="f-category">Category <span class="req" aria-hidden="true">*</span></label>
           <select id="f-category" name="category" required aria-describedby="e-category">
-            <option value="">Select a category‚Ä¶</option>
+            <option value="">Select a category…</option>
           </select>
           <div class="field-hint"><p class="error" id="e-category"></p></div>
         </div>
@@ -1032,7 +1032,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 "use strict";
 
 /* =========================================================
-   CONFIG ‚Äî change the email address here (one place only)
+   CONFIG — change the email address here (one place only)
    ========================================================= */
 const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/YOUR_EMAIL@example.com";
 const FORMSUBMIT_TIMEOUT_MS = 15000;
@@ -1075,7 +1075,7 @@ const DUE_SOON_DAYS = 7;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /* =========================================================
-   State ‚Äî the single source of truth (in memory only)
+   State — the single source of truth (in memory only)
    ========================================================= */
 const state = {
   tasks: [],
@@ -1084,7 +1084,7 @@ const state = {
   sort: "urgency",
   nextId: 1,
   pendingDeleteId: null, // card showing the inline "Delete? Yes / No" toggle
-  openMoveId: null,      // card whose "Move ‚ñ∏" menu is open
+  openMoveId: null,      // card whose "Move ▸" menu is open
   focusAfterRender: null, // { id, action } or { selector } to restore keyboard focus after re-render
   isSending: false,
 };
@@ -1165,7 +1165,7 @@ function fillSelect(select, values) {
 }
 
 /* =========================================================
-   Seed data ‚Äî 10 demo tasks, dates relative to today
+   Seed data — 10 demo tasks, dates relative to today
    ========================================================= */
 function seedTasks() {
   const seed = [
@@ -1234,7 +1234,7 @@ function seedTasks() {
 }
 
 /* =========================================================
-   Filtering & sorting (pure ‚Äî never touch the DOM)
+   Filtering & sorting (pure — never touch the DOM)
    ========================================================= */
 function applyFilters(tasks) {
   const { project, query, priority, flag } = state.filters;
@@ -1266,7 +1266,7 @@ function sortTasks(tasks) {
 }
 
 /* =========================================================
-   Rendering ‚Äî the board is always re-rendered from state
+   Rendering — the board is always re-rendered from state
    ========================================================= */
 const ICON_ALERT = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 1 15.5 14.5H.5L8 1Zm-.9 5v4.2h1.8V6H7.1Zm0 5.4v1.7h1.8v-1.7H7.1Z"/></svg>`;
 const ICON_CLOCK = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M8 1.9a6.1 6.1 0 1 0 0 12.2A6.1 6.1 0 0 0 8 1.9ZM8 4.5V8l2.4 1.6"/></svg>`;
@@ -1314,7 +1314,7 @@ function renderCard(task) {
 
   return `
     <article class="card ${prioClass(task.priority)} ${statusClass}${overdue ? " is-overdue" : ""}" draggable="true" data-id="${id}" aria-label="${id}: ${title}">
-      <button type="button" class="icon-btn" data-action="delete" data-id="${id}" aria-label="Delete ${id}">√ó</button>
+      <button type="button" class="icon-btn" data-action="delete" data-id="${id}" aria-label="Delete ${id}">×</button>
       <div class="card-top">
         <span class="task-id">${id}</span>
         ${urgencyChip(task)}
@@ -1332,7 +1332,7 @@ function renderCard(task) {
           <span class="tag">${escapeHtml(task.category)}</span>
         </div>
         <button type="button" class="move-btn" data-action="move" data-id="${id}"
-          aria-expanded="${moveOpen}" aria-controls="move-${id}" aria-label="Move ${id} to another column">Move ‚ñ∏</button>
+          aria-expanded="${moveOpen}" aria-controls="move-${id}" aria-label="Move ${id} to another column">Move ▸</button>
       </div>
       ${moveMenu}
       ${confirmRow}
@@ -1412,7 +1412,7 @@ function restoreFocus() {
 }
 
 /* =========================================================
-   Actions ‚Äî mutate state, then re-render
+   Actions — mutate state, then re-render
    ========================================================= */
 function addTask(data) {
   const task = {
@@ -1506,7 +1506,7 @@ async function notifyNewTask(task, honey) {
 }
 
 /* =========================================================
-   Add Task form ‚Äî validation & submission
+   Add Task form — validation & submission
    ========================================================= */
 const FORM_FIELDS = ["title", "description", "project", "category", "assignee", "priority", "dueDate", "status"];
 
@@ -1574,7 +1574,7 @@ function setSending(sending) {
   state.isSending = sending;
   const btn = document.getElementById("submit-task");
   btn.disabled = sending;
-  btn.textContent = sending ? "Sending‚Ä¶" : "Add task";
+  btn.textContent = sending ? "Sending…" : "Add task";
   btn.setAttribute("aria-busy", String(sending));
 }
 
@@ -1605,7 +1605,7 @@ async function handleSubmit(event) {
     showToast(`Email notification sent for ${task.id}.`, "info");
   } catch (err) {
     console.warn("[IT PMO] Notification failed:", err);
-    showToast("Card added locally ‚Äî email notification failed", "warning", 6000);
+    showToast("Card added locally — email notification failed", "warning", 6000);
   } finally {
     setSending(false);
     closeModal();
@@ -1663,7 +1663,7 @@ function trapFocus(event) {
 }
 
 /* =========================================================
-   Board interactions ‚Äî click delegation (move / delete / add)
+   Board interactions — click delegation (move / delete / add)
    ========================================================= */
 function handleBoardClick(event) {
   const btn = event.target.closest("button[data-action]");
@@ -1716,7 +1716,7 @@ function handleSummaryClick(event) {
 }
 
 /* =========================================================
-   Drag & drop ‚Äî native HTML5 API, delegated on the board
+   Drag & drop — native HTML5 API, delegated on the board
    ========================================================= */
 function bindDragAndDrop(board) {
   board.addEventListener("dragstart", (event) => {
@@ -1868,4 +1868,3 @@ init();
 </script>
 </body>
 </html>
-
