@@ -1,1 +1,89 @@
+name: CI/CD
 
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Project constraint checks
+        run: |
+          set -e
+          test -f index.html || { echo "index.html missing"; exit 1; }
+          fail=0
+          check() { if grep -nE "$1" index.html; then echo "::error::$2"; fail=1; fi; }
+          check 'localStorage|sessionStorage|indexedDB|document\.cookie' 'Persistence APIs are not allowed'
+          check '(^|[^.a-zA-Z_])(alert|confirm)\(' 'Native alert()/confirm() are not allowed'
+          check '<script[^>]+src=' 'External scripts are not allowed'
+          check '<link[^>]+href="?https?:' 'External stylesheets/fonts are not allowed'
+          check '!important' '!important is not allowed'
+          hosts=$(grep -oE 'https?://[A-Za-z0-9.-]+' index.html | sed -E 's#https?://##' | sort -u | grep -vE '^(formsubmit\.co|www\.w3\.org)$' || true)
+          if [ -n "$hosts" ]; then echo "::error::Unexpected external hosts: $hosts"; fail=1; fi
+          exit $fail
+
+      - name: HTML well-formedness
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          VOID = {"area","base","br","col","embed","hr","img","input","link","meta","source","track","wbr"}
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.stack = []; self.errors = []
+              def handle_starttag(self, tag, attrs):
+                  if tag not in VOID: self.stack.append((tag, self.getpos()))
+              def handle_endtag(self, tag):
+                  if tag in VOID: return
+                  if not self.stack or self.stack[-1][0] != tag:
+                      self.errors.append(f"Unexpected </{tag}> at line {self.getpos()[0]}")
+                      while self.stack and self.stack[-1][0] != tag: self.stack.pop()
+                  if self.stack: self.stack.pop()
+          p = P(); p.feed(open("index.html", encoding="utf-8").read())
+          unclosed = [f"<{t}> line {l}" for t, (l, _) in p.stack if t not in ("html","head","body","p","li")]
+          for e in p.errors + [f"Unclosed {u}" for u in unclosed]: print(f"::error::{e}")
+          raise SystemExit(1 if p.errors or unclosed else 0)
+          PY
+
+  deploy:
+    needs: checks
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp index.html _site/
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
